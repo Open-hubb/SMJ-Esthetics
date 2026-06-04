@@ -723,6 +723,9 @@ function initWhatsAppFloat() {
 
 // ─── Init ───
 async function init() {
+  const copyrightYear = document.getElementById('copyright-year')
+  if (copyrightYear) copyrightYear.textContent = new Date().getFullYear().toString()
+
   initHeroScene()
   initIngredientsScene()
 
