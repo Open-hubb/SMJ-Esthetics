@@ -6,6 +6,8 @@
     <meta name="description" content="SMJ Esthetics — Natural skincare, handcrafted gifts & sustainable accessories made in Sierra Leone." />
     <title>SMJ Esthetics — Natural Care, Handcrafted in Sierra Leone</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Flot dashboard Web Analytics tracker -->
+    <script defer src="https://dashboard.flotme.ai/api/public/tracker.js?id=cbeac99e-a952-48a8-92ab-62d9e5d54906"></script>
   </head>
   <body>
     <!-- Loader -->
@@ -846,5 +848,34 @@
     </a>
 
     <script type="module" src="/src/main.ts"></script>
+    <!-- Flot dashboard CMS: apply editable marketing content (hero, about, contact) + live preview -->
+    <script>
+    (function(){
+      var API = 'https://dashboard.flotme.ai/api/public/site-content/cbeac99e-a952-48a8-92ab-62d9e5d54906';
+      function txt(sel, v){ var el = document.querySelector(sel); if (el && v) el.textContent = v; }
+      function apply(c){
+        if (!c) return;
+        if (c.hero) { txt('.hero-subtitle', c.hero.badge); txt('.hero-desc', c.hero.subtitle); }
+        if (c.about) {
+          txt('.about-label', c.about.eyebrow);
+          if (c.about.body) { var ps = document.querySelectorAll('.about-text'); c.about.body.split(/\n\n+/).forEach(function(p, i){ if (ps[i]) ps[i].textContent = p; }); }
+        }
+        if (c.contact && c.contact.email) {
+          var mail = document.querySelector('a[href^="mailto:"]');
+          if (mail) { mail.textContent = c.contact.email; mail.setAttribute('href', 'mailto:' + c.contact.email); }
+        }
+      }
+      fetch(API).then(function(r){ return r.ok ? r.json() : null; }).then(apply).catch(function(){});
+      // Live preview from the Flot dashboard CMS editor (postMessage, origin-checked).
+      if (window.parent !== window) {
+        window.addEventListener('message', function(e){
+          if (e.origin !== 'https://dashboard.flotme.ai') return;
+          if (!e.data || e.data.source !== 'flot-dashboard' || e.data.type !== 'site-content-preview' || !e.data.content) return;
+          apply(e.data.content);
+        });
+        window.parent.postMessage({ source: 'flot-site', type: 'preview-ready' }, '*');
+      }
+    })();
+    </script>
   </body>
 </html>
