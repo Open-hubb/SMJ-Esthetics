@@ -645,7 +645,7 @@ function initCart() {
     checkoutBtn.addEventListener('click', () => {
       const modal = document.getElementById('checkout-modal')!
       const iframe = document.getElementById('checkout-iframe') as HTMLIFrameElement
-      iframe.src = 'https://pay.flotme.ai/'
+      iframe.src = 'https://pay.flotme.ai/smjesthetics'
       closeCart()
       modal.style.opacity = '1'
       modal.style.pointerEvents = 'all'
@@ -721,6 +721,47 @@ function initWhatsAppFloat() {
   })
 }
 
+// ─── Products from the Flot dashboard ───
+interface DashProduct { id: string; name: string; price: number | string; image?: string | null; category?: string | null; description?: string | null; badge?: string | null }
+
+function escAttr(s: string) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+function escHtml(s: string) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+
+function buildProductCard(p: DashProduct): string {
+  const price = 'Le ' + Number(p.price).toLocaleString()
+  const img = p.image || ''
+  const badge = p.badge ? `<div class="absolute top-3 left-3 z-20"><span class="font-body text-[10px] text-[#E07A2C] tracking-[0.2em] uppercase bg-[#0d0906]/80 px-2.5 py-1 backdrop-blur-sm">${escHtml(p.badge)}</span></div>` : ''
+  const desc = p.description ? `<p class="font-body text-white/30 text-xs leading-relaxed mb-3 hidden md:block">${escHtml(p.description)}</p>` : ''
+  return `<div class="product-card group relative overflow-hidden bg-white/[0.02] border border-white/5 hover:border-[#E07A2C]/20 transition-all duration-500 cursor-pointer" data-category="${escAttr(p.category || '')}" data-product="${escAttr(p.id)}" data-name="${escAttr(p.name)}" data-price="${Number(p.price)}" data-img="${escAttr(img)}">
+    <div class="relative aspect-square overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0d0906] via-[#0d0906]/20 to-transparent z-10 opacity-60 group-hover:opacity-40 transition-opacity duration-500"></div>
+      <img src="${escAttr(img)}" alt="${escAttr(p.name)}" class="w-full h-full object-cover scale-100 group-hover:scale-105 transition-transform duration-700" loading="lazy"/>
+      ${badge}
+    </div>
+    <div class="p-4 md:p-5">
+      <h4 class="font-display text-base md:text-lg text-white mb-1 leading-tight">${escHtml(p.name)}</h4>
+      ${desc}
+      <div class="flex items-center justify-between gap-2">
+        <span class="font-body text-[#E07A2C] text-sm">${price}</span>
+        <button class="add-to-cart-btn font-body text-[10px] text-[#E07A2C] border border-[#E07A2C]/30 px-3 py-2 tracking-[0.1em] uppercase hover:bg-[#E07A2C] hover:text-[#0d0906] transition-all duration-300 cursor-pointer">Add</button>
+      </div>
+    </div>
+  </div>`
+}
+
+// Replace the bundled product cards with the dashboard catalogue (bundled cards
+// stay as the fallback if the dashboard is unreachable or empty).
+async function loadProductsFromDashboard() {
+  try {
+    const res = await fetch('https://dashboard.flotme.ai/api/public/products/cbeac99e-a952-48a8-92ab-62d9e5d54906')
+    if (!res.ok) return
+    const rows = (await res.json()) as DashProduct[]
+    if (!Array.isArray(rows) || !rows.length) return
+    const grid = document.getElementById('product-grid')
+    if (grid) grid.innerHTML = rows.map(buildProductCard).join('')
+  } catch { /* keep the bundled cards */ }
+}
+
 // ─── Init ───
 async function init() {
   const copyrightYear = document.getElementById('copyright-year')
@@ -737,6 +778,7 @@ async function init() {
   initScrollAnimations()
   initParallaxCards()
   initWhatsAppFloat()
+  await loadProductsFromDashboard()
   initCart()
   initCheckoutModal()
   initCategoryFilters()
