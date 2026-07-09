@@ -642,15 +642,61 @@ function initCart() {
   })
 
   if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', () => {
-      const modal = document.getElementById('checkout-modal')!
-      const iframe = document.getElementById('checkout-iframe') as HTMLIFrameElement
+    const modal = document.getElementById('checkout-modal')!
+    const iframe = document.getElementById('checkout-iframe') as HTMLIFrameElement
+    const formWrap = document.getElementById('checkout-form') as HTMLElement | null
+    const form = document.getElementById('delivery-form') as HTMLFormElement | null
+    const errEl = document.getElementById('co-error') as HTMLElement | null
+    const submitBtn = document.getElementById('co-submit') as HTMLButtonElement | null
+
+    function goToPayment() {
+      if (formWrap) formWrap.style.display = 'none'
       iframe.src = 'https://pay.flotme.ai/smjesthetics'
+      iframe.style.display = 'block'
+    }
+
+    checkoutBtn.addEventListener('click', () => {
+      if (cart.length === 0) return
+      // Show the delivery-details form first (fall back to direct pay if the form isn't present).
+      if (formWrap && form) {
+        formWrap.style.display = 'block'
+        iframe.style.display = 'none'
+        iframe.src = ''
+        if (errEl) errEl.style.display = 'none'
+      } else {
+        goToPayment()
+      }
       closeCart()
       modal.style.opacity = '1'
       modal.style.pointerEvents = 'all'
       document.body.style.overflow = 'hidden'
     })
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (cart.length === 0) return
+        const val = (id: string) => (document.getElementById(id) as HTMLInputElement).value.trim()
+        const name = val('co-name'), phone = val('co-phone'), address = val('co-address'), city = val('co-city')
+        if (!name || !phone || !address || !city) {
+          if (errEl) { errEl.textContent = 'Please fill in all fields.'; errEl.style.display = 'block' }
+          return
+        }
+        const items = cart.map(i => ({ name: i.name, size: '', qty: i.qty, price: i.price }))
+        const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Placing order…' }
+        if (errEl) errEl.style.display = 'none'
+        try {
+          await fetch('https://dashboard.flotme.ai/api/public/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ merchantId: 'cbeac99e-a952-48a8-92ab-62d9e5d54906', name, phone, address, city, items, total, currency: 'Le' }),
+          })
+        } catch { /* don't block the sale if capture fails */ }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Continue to Payment' }
+        goToPayment()
+      })
+    }
   }
 
   renderCart()

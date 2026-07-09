@@ -627,7 +627,18 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <iframe id="checkout-iframe" src="" class="w-full h-[calc(100%-56px)] border-none bg-white"></iframe>
+          <div id="checkout-form" class="p-6 overflow-y-auto" style="height:calc(100% - 57px)">
+            <p class="font-body text-white/50 text-sm mb-6">Enter your delivery details to place your order.</p>
+            <form id="delivery-form" class="space-y-4">
+              <input id="co-name" type="text" required placeholder="Full name" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white text-sm placeholder-white/30 focus:border-[#E07A2C] outline-none transition-colors" />
+              <input id="co-phone" type="tel" required placeholder="Phone number" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white text-sm placeholder-white/30 focus:border-[#E07A2C] outline-none transition-colors" />
+              <input id="co-address" type="text" required placeholder="Delivery address" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white text-sm placeholder-white/30 focus:border-[#E07A2C] outline-none transition-colors" />
+              <input id="co-city" type="text" required placeholder="City / Area" class="w-full bg-white/5 border border-white/10 px-4 py-3 text-white text-sm placeholder-white/30 focus:border-[#E07A2C] outline-none transition-colors" />
+              <p id="co-error" class="text-red-400 text-xs" style="display:none"></p>
+              <button type="submit" id="co-submit" class="w-full bg-[#E07A2C] text-[#0d0906] font-body text-sm tracking-[0.15em] uppercase py-3.5 hover:bg-[#E07A2C]/90 transition-colors cursor-pointer border-none">Continue to Payment</button>
+            </form>
+          </div>
+          <iframe id="checkout-iframe" src="" class="w-full h-[calc(100%-56px)] border-none bg-white" style="display:none"></iframe>
         </div>
       </div>
 
