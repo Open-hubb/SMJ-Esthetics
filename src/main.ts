@@ -691,10 +691,13 @@ function initCart() {
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Placing order…' }
         if (errEl) errEl.style.display = 'none'
         let orderId: string | undefined
+        const controller = new AbortController()
+        const timeoutId = window.setTimeout(() => controller.abort(), 10_000)
         try {
           const response = await fetch('https://dashboard.flotme.ai/api/public/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({ merchantId: 'cbeac99e-a952-48a8-92ab-62d9e5d54906', name, phone, address, city, items, total, currency: 'SLE' }),
           })
           if (!response.ok) throw new Error(`Order capture returned ${response.status}`)
@@ -711,6 +714,8 @@ function initCart() {
           orderId = capturedOrder.orderId
         } catch (captureError) {
           console.warn('Order capture failed; continuing to payment.', captureError)
+        } finally {
+          window.clearTimeout(timeoutId)
         }
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Continue to Payment' }
         goToPayment(orderId, total)

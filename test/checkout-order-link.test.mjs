@@ -29,3 +29,8 @@ test("checkout pre-fills Flot with the captured cart total in the gateway curren
     "the captured order currency must match the Flot checkout currency"
   )
 })
+
+test("checkout times out order capture so payment cannot be stuck by a slow dashboard", () => {
+  assert.match(app, /new AbortController\(\)/)
+  assert.match(app, /signal:\s*controller\.signal/)
+})
