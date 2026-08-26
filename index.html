@@ -884,7 +884,7 @@
           if (!e.data || e.data.source !== 'flot-dashboard' || e.data.type !== 'site-content-preview' || !e.data.content) return;
           apply(e.data.content);
         });
-        window.parent.postMessage({ source: 'flot-site', type: 'preview-ready' }, '*');
+        window.parent.postMessage({ source: 'flot-site', type: 'preview-ready' }, 'https://dashboard.flotme.ai');
       }
     })();
     </script>
