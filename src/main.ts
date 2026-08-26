@@ -687,12 +687,15 @@ function initCart() {
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Placing order…' }
         if (errEl) errEl.style.display = 'none'
         try {
-          await fetch('https://dashboard.flotme.ai/api/public/order', {
+          const response = await fetch('https://dashboard.flotme.ai/api/public/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ merchantId: 'cbeac99e-a952-48a8-92ab-62d9e5d54906', name, phone, address, city, items, total, currency: 'Le' }),
           })
-        } catch { /* don't block the sale if capture fails */ }
+          if (!response.ok) throw new Error(`Order capture returned ${response.status}`)
+        } catch (captureError) {
+          console.warn('Order capture failed; continuing to payment.', captureError)
+        }
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Continue to Payment' }
         goToPayment()
       })
