@@ -649,9 +649,12 @@ function initCart() {
     const errEl = document.getElementById('co-error') as HTMLElement | null
     const submitBtn = document.getElementById('co-submit') as HTMLButtonElement | null
 
-    function goToPayment() {
+    function goToPayment(orderId?: string, total?: number) {
       if (formWrap) formWrap.style.display = 'none'
-      iframe.src = 'https://pay.flotme.ai/smjesthetics'
+      const checkoutUrl = new URL('https://pay.flotme.ai/smjesthetics')
+      if (total && Number.isFinite(total)) checkoutUrl.searchParams.set('amount', String(total))
+      if (orderId) checkoutUrl.searchParams.set('orderId', orderId)
+      iframe.src = checkoutUrl.toString()
       iframe.style.display = 'block'
     }
 
@@ -664,7 +667,8 @@ function initCart() {
         iframe.src = ''
         if (errEl) errEl.style.display = 'none'
       } else {
-        goToPayment()
+        const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
+        goToPayment(undefined, total)
       }
       closeCart()
       modal.style.opacity = '1'
@@ -686,18 +690,35 @@ function initCart() {
         const total = cart.reduce((s, i) => s + i.price * i.qty, 0)
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Placing order…' }
         if (errEl) errEl.style.display = 'none'
+        let orderId: string | undefined
+        const controller = new AbortController()
+        const timeoutId = window.setTimeout(() => controller.abort(), 10_000)
         try {
           const response = await fetch('https://dashboard.flotme.ai/api/public/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ merchantId: 'cbeac99e-a952-48a8-92ab-62d9e5d54906', name, phone, address, city, items, total, currency: 'Le' }),
+            signal: controller.signal,
+            body: JSON.stringify({ merchantId: 'cbeac99e-a952-48a8-92ab-62d9e5d54906', name, phone, address, city, items, total, currency: 'SLE' }),
           })
           if (!response.ok) throw new Error(`Order capture returned ${response.status}`)
+          const capturedOrder: unknown = await response.json()
+          if (
+            !capturedOrder ||
+            typeof capturedOrder !== 'object' ||
+            !('orderId' in capturedOrder) ||
+            typeof capturedOrder.orderId !== 'string' ||
+            !capturedOrder.orderId
+          ) {
+            throw new Error('Order capture did not return an order ID')
+          }
+          orderId = capturedOrder.orderId
         } catch (captureError) {
           console.warn('Order capture failed; continuing to payment.', captureError)
+        } finally {
+          window.clearTimeout(timeoutId)
         }
         if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Continue to Payment' }
-        goToPayment()
+        goToPayment(orderId, total)
       })
     }
   }
